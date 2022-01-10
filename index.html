@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <script type="module">
+    import { ready, querySelector as $ } from 'https://lsong.org/scripts/dom.js';
+    import { requestCamera } from 'https://lsong.org/scripts/media.js';
+    import { rect, image, text } from 'https://lsong.org/scripts/canvas.js';
+
+    ready(async () => {
+      const video = $('#webcam');
+      const canvas = $('#preview');
+      const ctx = canvas.getContext('2d');
+      const model = await cocoSsd.load();
+      const process = async () => {
+        image(ctx, video);
+        const objects = await model.detect(video);
+        for (const obj of objects) {
+          const { class: type, score, bbox } = obj;
+          const [x, y, width, height] = bbox;
+          rect(ctx, { x, y, width, height, color: 'red' });
+          text(ctx, `${type} - ${score * 100 | 0}%`, { x, y });
+        }
+        requestAnimationFrame(process);
+      };
+
+      const camera = await requestCamera();
+      video.srcObject = camera;
+      video.onloadeddata = process;
+    });
+  </script>
+</head>
+
+<body>
+
+  <div>
+    <canvas id="preview" width="640" height="480"></canvas>
+    <video id="webcam" autoplay width="640" height="480" style="display: none;"></video>
+  </div>
+
+</body>
+
+</html>
